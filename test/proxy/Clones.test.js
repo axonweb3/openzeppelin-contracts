@@ -3,6 +3,7 @@ const { expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 const shouldBehaveLikeClone = require('./Clones.behaviour');
 
 const ClonesMock = artifacts.require('ClonesMock');
+const { ethers } = require('hardhat');
 
 contract('Clones', function (accounts) {
   describe('clone', function () {
@@ -33,8 +34,10 @@ contract('Clones', function (accounts) {
         'NewInstance',
       );
       // deploy twice
+      const Factory = await ethers.getContractFactory('ClonesMock');
+      const factoryEthers = Factory.attach(factory.address);
       await expectRevert(
-        factory.cloneDeterministic(implementation, salt, '0x'),
+        factoryEthers.callStatic.cloneDeterministic(implementation, salt, '0x', { gasLimit: '30000000' }),
         'ERC1167: create2 failed',
       );
     });
