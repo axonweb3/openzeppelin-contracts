@@ -1,5 +1,6 @@
-const {balance, ether, expectRevert, send, expectEvent} = require('@openzeppelin/test-helpers');
-const {expect} = require('chai');
+const { balance, ether, expectRevert, send, expectEvent} = require('@openzeppelin/test-helpers');
+const { expect } = require('chai');
+const { ethers } = require('hardhat');
 
 const AddressImpl = artifacts.require('AddressImpl');
 const EtherReceiver = artifacts.require('EtherReceiverMock');
@@ -106,7 +107,7 @@ contract('Address', function (accounts) {
 
         const receipt = await this.mock.functionCall(this.contractRecipient.address, abiEncodedCall);
 
-        expectEvent(receipt, 'CallReturnValue', {data: '0x1234'});
+        expectEvent(receipt, 'CallReturnValue', { data: '0x1234' });
         await expectEvent.inTransaction(receipt.tx, CallReceiverMock, 'MockFunctionCalled');
       });
 
@@ -143,12 +144,16 @@ contract('Address', function (accounts) {
           inputs: [],
         }, []);
 
+        const Mock = await ethers.getContractFactory('AddressImpl');
+        const mock = Mock.attach(this.mock.address);
+
         await expectRevert(
-          this.mock.functionCall(this.contractRecipient.address, abiEncodedCall, { gas: '100000' }),
+          mock.callStatic.functionCall(this.contractRecipient.address, abiEncodedCall, { gasLimit: '100000' }),
           'Address: low-level call failed',
         );
       });
 
+      // eslint-disable-next-line max-len
       it('reverts when the called function throws(https://github.com/nervosnetwork/godwoken-web3/issues/286)', async function () {
         const abiEncodedCall = web3.eth.abi.encodeFunctionCall({
           name: 'mockFunctionThrows',
@@ -308,8 +313,11 @@ contract('Address', function (accounts) {
         inputs: [],
       }, []);
 
+      const Mock = await ethers.getContractFactory('AddressImpl');
+      const mock = Mock.attach(this.mock.address);
+
       await expectRevert(
-        this.mock.functionStaticCall(this.contractRecipient.address, abiEncodedCall, { gas: '100000' }),
+        mock.callStatic.functionStaticCall(this.contractRecipient.address, abiEncodedCall, { gasLimit: '100000' }),
         'Address: low-level static call failed',
       );
     });
